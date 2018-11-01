@@ -1,50 +1,53 @@
 var express = require("express");
-
-var fs = require('fs');
+var app=express();
 var FileReader=require("filereader");
 var moment = require("moment");
-var te=require ('text-encoding');
-//var encoding=te.encoding;
+var session=require("express-session");
 const { StringDecoder } = require('string_decoder');
 const decoder = new StringDecoder('utf8');
 var bodyParser  = require("body-parser");
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.json());
 var middleware = require("./middleware");
 var flash=require("connect-flash");
 var http=require("http");
 var multer=require("multer");
 
 var uploads = multer({ dest: 'uploads/' })
-var app=express();
-//const {MongoClient, ObjectID} = require('mongodb');
+
+
 var mongoose=require("mongoose");
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
   console.log("Connected");
 });
-var session = require("express-session");
 var passport    = require("passport");
 var LocalStrategy = require('passport-local').Strategy;
 var User = require("./models/user");
-var collection;
 const MongoClient = require('mongodb').MongoClient;
-app.use(require("express-session")({
-  secret: "Once again Rusty wins cutest dog!",
-  resave: false,
-  saveUninitialized: false
-}));
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(bodyParser.json());
-app.use(passport.initialize());
+//app.use(require("express-session")({
+  //secret: "Once again Rusty wins cutest dog!",
+  //resave: false,
+  //saveUninitialized: false
+//}));
+
+
 app.use(flash());
+
+app.use(session({ secret: 'anything' }));
+app.use(passport.initialize());
 app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
 app.use(function(req, res, next){
-  res.locals.currentUser = req.user;
-  res.locals.success = req.flash('success');
-  res.locals.error = req.flash('error');
-  next();
+   res.locals.currentUser = req.user;
+   next();
 });
+
+
 //passport.use(new LocalStrategy(User.authenticate()));
 passport.use('local',new LocalStrategy(
     function(username, password, done) {
@@ -65,8 +68,6 @@ passport.use('local',new LocalStrategy(
       })
     }
   ));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
 
 /*
 
@@ -137,12 +138,28 @@ app.get("/signup",function(req,res){
 app.get("/thankyou",function(req,res){
   res.render("thankyou");
 });
+
+app.get("/profile/:username",function(req,res){
+  var userid=req.params.username;
+  //console.log(req.user)
+  //console.log(currentUser)
+  User.findOne({ 'username': userid }, function(err, user){
+    console.log(res.locals.currentUser);
+    console.log(user)
+      res.render("profile",{
+        user:user,
+      currentUser:req.user
+      })
+  });
+
+})
 app.get("/index",middleware.isLoggedIn,function(req,res){
     res.render("index");
 });
 
-app.use(multer({ dest:__dirname + '/views/uploads/'}).any('image'));
+app.use(multer({ dest:__dirname + '/public/uploads/'}).any('image'));
 app.post("/signup",function(req,res){
+ // console.log(req.body)
   User.find({ 'username': req.body.userid,'email':req.body.email }, function(err, user) {
 
       if (err) {

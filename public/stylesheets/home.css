@@ -1,3 +1,4 @@
+
 /* vertical rule line*/
 .v1 {
     border-right: 1px solid #52A4BF;
@@ -45,7 +46,7 @@
 }
 
 .Content{
-  width: 33.33%;
+  width: 50%;
   text-align: center;
 
 }
