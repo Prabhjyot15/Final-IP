@@ -1,5 +1,6 @@
 var express = require("express");
 var app=express();
+var bcrypt=require("bcrypt");
 var FileReader=require("filereader");
 var moment = require("moment");
 var session=require("express-session");
@@ -35,7 +36,7 @@ const MongoClient = require('mongodb').MongoClient;
 
 app.use(flash());
 
-app.use(session({ secret: 'anything' }));
+//app.use(session({ secret: 'anything' }));
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
@@ -50,24 +51,27 @@ app.use(function(req, res, next){
 
 //passport.use(new LocalStrategy(User.authenticate()));
 passport.use('local',new LocalStrategy(
-    function(username, password, done) {
-        //console.log(username);
-        //console.log(password);
-      User.findOne({ 'email': username }, function(err, user) {
-         // console.log(user);
-          //console.log(user.username);
-          //console.log(user.password);
-        if (err) { return done(err); }
-        if (!user) {
-          return done(null, false, { message: 'Incorrect username.' });
-        }
-        if (user.password!=password) {
-          return done(null, false, { message: 'Incorrect password.' });
-        }
-        return done(null, user);
-      })
+  function(username, password, done) {
+      //console.log(username);
+      //console.log(password);
+    User.findOne({ 'email': username }, function(err, user) {
+       // console.log(user);
+        //console.log(user.username);
+        //console.log(user.password);
+      if (err) { return done(err); }
+      if (!user) {
+        return done(null, false, { message: 'Incorrect username.' });
+      }
+
+      if(!bcrypt.compareSync(password, user.password))
+    {return done(null, false, { message: 'Incorrect password.' });
     }
-  ));
+
+      return done(null, user);
+      });
+    }
+
+));
 
 /*
 
@@ -159,7 +163,6 @@ app.get("/index",middleware.isLoggedIn,function(req,res){
 
 app.use(multer({ dest:__dirname + '/public/uploads/'}).any('image'));
 app.post("/signup",function(req,res){
- // console.log(req.body)
   User.find({ 'username': req.body.userid,'email':req.body.email }, function(err, user) {
 
       if (err) {
@@ -180,7 +183,7 @@ app.post("/signup",function(req,res){
       res.redirect("/signup");
     }
   }
-); 
+);
   var email = req.body.email;
   var isAdmin = req.body.isAdmin;
   var imgname = req.files[0].filename;
@@ -189,24 +192,44 @@ app.post("/signup",function(req,res){
     console.log("Facultyy")
     var subject = req.body.subject;
     var password = req.body.pwd;
-    var newUser = {username: username, email: email,isAdmin:isAdmin,subject:subject,imgname:imgname,password:password}
-  }
-  else{
+    bcrypt.hash(password, 12)
+    .then(function(hashedPassword) {
+        var newUser = {username: username, email: email,isAdmin:isAdmin,subject:subject,status:'none',imgname:imgname,password:hashedPassword}
+        User.create(newUser, function(err, user){
+            if(err){
+                console.log(err);
+            } else {
+               user.save();
+              res.redirect("/thankyou");
+            }
+        });
+    })
+    .catch(function(error){
+        console.log("Error saving user: ");
+        console.log(error);
+        next();
+    });
+}
+else{
     var password = req.body.pwd;
-    var newUser = {username: username, email: email,isAdmin:isAdmin,imgname:imgname,password:password}
-  }
-  //var age = req.body.age;
- 
-
-
-  User.create(newUser, function(err, user){
-      if(err){
-          console.log(err);
-      } else {
-         user.save();
-         res.redirect("/thankyou");
-      }
-  });
+    bcrypt.hash(password, 12)
+    .then(function(hashedPassword) {
+        var newUser = {username: username, email: email,isAdmin:isAdmin,status:'none',imgname:imgname,password:hashedPassword}
+        User.create(newUser, function(err, user){
+            if(err){
+                console.log(err);
+            } else {
+               user.save();
+               res.redirect("/thankyou");
+            }
+        });
+    })
+    .catch(function(error){
+        console.log("Error saving user: ");
+        console.log(error);
+        next();
+    });
+}
 });
   });
   app.post(
@@ -218,6 +241,7 @@ app.post("/signup",function(req,res){
           var email=req.body.username
          // console.log(email);
       User.findOne({ 'email': email }, function(err, user){
+        console.log(user)
         if(user.isAdmin==="Faculty"){
           var subject=user.subject;
           res.render("index2",{

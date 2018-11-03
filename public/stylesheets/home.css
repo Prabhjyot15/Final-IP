@@ -9,6 +9,13 @@
     margin: auto;
 }
 
+
+/* #comment{
+  float: none !important; 
+  width: auto !important;
+ }
+
+} */
 .newspaper {
     -webkit-column-count: 1; /* Chrome, Safari, Opera */
     -moz-column-count: 3; /* Firefox */
@@ -377,4 +384,10 @@ color: #fff;
   position: absolute;
   top: 8px;
   left: 16px;
+}
+@media only screen and (max-width: 600px) {
+  textarea{
+    width:90%;
+    height:90%;
+  }
 }

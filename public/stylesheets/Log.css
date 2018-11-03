@@ -3,10 +3,10 @@
     color:#666;
     padding:20px;
     border-radius:10px;
-    position: absolute;
+    position: relative;
     border:2px solid black;
-    margin: 0.1em auto;
-    top:5em;
+    margin: 0.0em auto;
+    top:1em;
     right: 0;
     bottom: 0;
     left: 0;
