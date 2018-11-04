@@ -1,40 +1,26 @@
 var express = require("express");
 var app=express();
 var bcrypt=require("bcrypt");
-var FileReader=require("filereader");
 var moment = require("moment");
-var session=require("express-session");
 const { StringDecoder } = require('string_decoder');
-const decoder = new StringDecoder('utf8');
 var bodyParser  = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 var middleware = require("./middleware");
-var flash=require("connect-flash");
 var http=require("http");
 var multer=require("multer");
-
-var uploads = multer({ dest: 'uploads/' })
-
-
 var mongoose=require("mongoose");
-var db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() {
-  console.log("Connected");
-});
 var passport    = require("passport");
 var LocalStrategy = require('passport-local').Strategy;
 var User = require("./models/user");
 const MongoClient = require('mongodb').MongoClient;
-//app.use(require("express-session")({
-  //secret: "Once again Rusty wins cutest dog!",
-  //resave: false,
-  //saveUninitialized: false
-//}));
+app.use(require("express-session")({
+  secret: "Secret Key!",
+  resave: false,
+  saveUninitialized: false
+}));
 
 
-app.use(flash());
 
 //app.use(session({ secret: 'anything' }));
 app.use(passport.initialize());
@@ -47,9 +33,6 @@ app.use(function(req, res, next){
    res.locals.currentUser = req.user;
    next();
 });
-
-
-//passport.use(new LocalStrategy(User.authenticate()));
 passport.use('local',new LocalStrategy(
   function(username, password, done) {
       //console.log(username);
@@ -76,8 +59,13 @@ passport.use('local',new LocalStrategy(
 /*
 
 ));*/
-const dbName = 'myproject';
+//const dbName = 'myproject';
 mongoose.connect("mongodb://localhost:27017/ProjectApp1", { useNewUrlParser: true });
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  console.log("Connected");
+});
 // Use connect method to connect to the server
 //MongoClient.connect(url, function(err, client) {
   //assert.equal(null, err);
@@ -145,11 +133,10 @@ app.get("/thankyou",function(req,res){
 
 app.get("/profile/:username",function(req,res){
   var userid=req.params.username;
-  //console.log(req.user)
-  //console.log(currentUser)
+  
   User.findOne({ 'username': userid }, function(err, user){
-    console.log(res.locals.currentUser);
-    console.log(user)
+    //console.log(res.locals.currentUser);
+    //console.log(req.user)
       res.render("profile",{
         user:user,
       currentUser:req.user
@@ -158,6 +145,9 @@ app.get("/profile/:username",function(req,res){
 
 })
 app.get("/index",middleware.isLoggedIn,function(req,res){
+    res.render("index");
+});
+app.get("/index2",middleware.isLoggedIn,function(req,res){
     res.render("index");
 });
 
@@ -179,7 +169,7 @@ app.post("/signup",function(req,res){
     console.log("Reached");
     if(user)
     {
-      req.flash("error","User with this Userid Already exists");
+      //req.flash("error","User with this Userid Already exists");
       res.redirect("/signup");
     }
   }
@@ -241,7 +231,7 @@ else{
           var email=req.body.username
          // console.log(email);
       User.findOne({ 'email': email }, function(err, user){
-        console.log(user)
+        //console.log(user)
         if(user.isAdmin==="Faculty"){
           var subject=user.subject;
           res.render("index2",{
@@ -271,25 +261,24 @@ else{
           socket.on('join', (params, callback) => {
              
             if (!isRealString(params.name) || !isRealString(params.room)) {
-              return callback('Name and room name are required.');
+              return callback('Please Login Correctly.');
             }
             //console.log(params);
             socket.join(params.room);
-            users.removeUser(socket.id);
+            users.removeUser(socket.id);//Removing from other groups
 
             users.addUser(socket.id, params.name,params.image, params.room);
         
             io.to(params.room).emit('updateUserList', users.getUserList(params.room));
             if(params.room==="CNS"){
-              CNSChat.find({}.toArray,function(err,docs){
-                if (err)
-                    console.log('error occured in the database');
+              CNSChat.find({},function(err,docs){
+                if (err)                    console.log('error occured in the database');
                 io.to("CNS").emit("chatHistory",docs)
                 //console.log("Event emmited")
             });
             }
             else if(params.room==="IOT"){
-              IOTChat.find({}.toArray,function(err,docs){
+              IOTChat.find({},function(err,docs){
                 if (err)
                     console.log('error occured in the database');
                 io.to("IOT").emit("chatHistory",docs)
@@ -297,7 +286,7 @@ else{
             });
             }
             else if(params.room==="ADMT"){
-              ADMTChat.find({}.toArray,function(err,docs){
+              ADMTChat.find({},function(err,docs){
                 if (err)
                     console.log('error occured in the database');
                 io.to("ADMT").emit("chatHistory",docs)
@@ -305,7 +294,7 @@ else{
             });
             }
             else {
-              IPChat.find({}.toArray,function(err,docs){
+              IPChat.find({},function(err,docs){
                 if (err)
                     console.log('error occured in the database');
                 io.to("IP").emit("chatHistory",docs)
