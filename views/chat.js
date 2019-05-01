@@ -4,7 +4,7 @@ function scrollToBottom () {
   var messages = jQuery('#messages');
   var newMessage = messages.children('li:last-child')
   // Heights
-  var clientHeight = messages.prop('clientHeight');
+  var clientHeight = messages.prop('clientHeight');//prop is used to retrieve dom property values
   var scrollTop = messages.prop('scrollTop');
   var scrollHeight = messages.prop('scrollHeight');
   var newMessageHeight = newMessage.innerHeight();

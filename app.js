@@ -66,29 +66,7 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
   console.log("Connected");
 });
-// Use connect method to connect to the server
-//MongoClient.connect(url, function(err, client) {
-  //assert.equal(null, err);
-  //console.log("Connected successfully to server");
- 
-  //const db = client.db(dbName);
-  //collection = db.collection('documents');
-  //client.close();
-//});
-//var url="mongodb://localhost:27017/ProjectApp";
-/*MongoClient.connect(url, function(err, db) {
-    if (err) throw err;
-    console.log("Reached");
-    var userCollection =db= mongo.collection('user');
-    dbo = db.db("mydb");
-   // console.log(dbo);
-    dbo.createCollection("customers", function(err, res) {
-        console.log("collection created")
-        
-      if (err) throw err;
-      db.close();
-    });
- // });*/
+
 const socketIO=require("socket.io");
 var port=process.env.PORT || 3000;
 var server=http.createServer(app);
@@ -415,7 +393,7 @@ else{
               });
               }
             
-          });var app=express();
+          });
         
           //socket.on('createFileMessage', (message) => {
             socket.on('base64 file', function (msg) {
@@ -495,7 +473,7 @@ else{
         
             if (user) {
               io.to(user.room).emit('updateUserList', users.getUserList(user.room));
-              io.to(user.room).emit('newMessage', generateMessage('Admin',`${user.image}`,`${user.name} has left.`));
+             // io.to(user.room).emit('newMessage', generateMessage('Admin',`${user.image}`,`${user.name} has left.`));
             }
           });
         });
